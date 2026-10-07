@@ -51,7 +51,51 @@ document.addEventListener("DOMContentLoaded", () => {
           participantsList.className = "participants-list";
           details.participants.forEach((participant) => {
             const listItem = document.createElement("li");
-            listItem.textContent = participant;
+
+            const participantEmail = document.createElement("span");
+            participantEmail.className = "participant-email";
+            participantEmail.textContent = participant;
+
+            const unregisterButton = document.createElement("button");
+            unregisterButton.type = "button";
+            unregisterButton.className = "unregister-button";
+            unregisterButton.setAttribute(
+              "aria-label",
+              `Unregister ${participant} from ${name}`
+            );
+            unregisterButton.title = "Unregister participant";
+            unregisterButton.innerHTML = `
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 3h6l1 2h4v2H4V5h4l1-2zm-3 6h12l-.8 11H6.8L6 9zm3 2v7h2v-7H9zm4 0v7h2v-7h-2z" />
+              </svg>
+            `;
+            unregisterButton.addEventListener("click", async () => {
+              try {
+                const response = await fetch(
+                  `/activities/${encodeURIComponent(name)}/signup?email=${encodeURIComponent(participant)}`,
+                  { method: "DELETE" }
+                );
+                const result = await response.json();
+
+                if (!response.ok) {
+                  throw new Error(result.detail || "Failed to unregister participant");
+                }
+
+                messageDiv.textContent = result.message;
+                messageDiv.className = "success";
+                messageDiv.classList.remove("hidden");
+                await fetchActivities();
+              } catch (error) {
+                messageDiv.textContent = error instanceof Error
+                  ? error.message
+                  : "Failed to unregister participant. Please try again.";
+                messageDiv.className = "error";
+                messageDiv.classList.remove("hidden");
+                console.error("Error unregistering participant:", error);
+              }
+            });
+
+            listItem.append(participantEmail, unregisterButton);
             participantsList.appendChild(listItem);
           });
           participantsSection.appendChild(participantsList);
